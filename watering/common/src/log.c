@@ -1,6 +1,5 @@
 #include <stdarg.h>
 #include <stdio.h>
-#include "pico/stdlib.h"
 #include "log.h"
 
 void log_tag(const char *tag, const char *fmt, va_list args)

@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 
+# SDK PATH
+set(PICO_SDK_PATH "${CMAKE_SOURCE_DIR}/pico-sdk")
+set(FREERTOS_KERNEL_PATH "${CMAKE_SOURCE_DIR}/FreeRTOS/FreeRTOS/Source")
+
 # Pull in SDK (must be before project)
 include(pico_sdk_import.cmake)
+
+# Pull in FreeRTOS
+include(FreeRTOS_Kernel_import.cmake)
 
 project(watering C CXX ASM)
 set(CMAKE_C_STANDARD 11)
