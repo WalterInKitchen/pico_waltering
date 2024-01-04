@@ -7,6 +7,10 @@ aux_source_directory(app/src SRC_LIST)
 
 add_executable(watering ${SRC_LIST})
 
+target_compile_definitions(watering PRIVATE
+    INPUT_HANDLER_LOG_ENABLE=1
+)
+
 # pull in common dependencies
 target_link_libraries(watering pico_stdlib FreeRTOS-Kernel FreeRTOS-Kernel-Heap1)
 

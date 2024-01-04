@@ -19,6 +19,8 @@
     "cmake.buildBeforeRun": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
-        "log.h": "c"
+        "log.h": "c",
+        "compare": "cpp",
+        "cstdint": "cpp"
     }
 }

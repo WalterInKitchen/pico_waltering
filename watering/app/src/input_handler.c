@@ -44,12 +44,13 @@ static void inputEventHandlerTask(void *pvParameters)
         {
             continue;
         }
-        log_error("key %d %d", currentKeyEvt.key, currentKeyEvt.state);
+#if INPUT_HANDLER_LOG_ENABLE
+        printf("input_event:%d %d\r\n", currentKeyEvt.key, currentKeyEvt.state);
+#endif
     }
 }
 
 void input_handler_init(void)
 {
-    log_error("init FreeRTOS ...!!!");
-    xTaskCreate(inputEventHandlerTask, "TX", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
+    xTaskCreate(inputEventHandlerTask, "inputHandler", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
 }

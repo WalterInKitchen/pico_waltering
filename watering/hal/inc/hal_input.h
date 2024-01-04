@@ -5,7 +5,7 @@
 
 typedef enum
 {
-    KEY_LEFT,
+    KEY_LEFT = 1,
     KEY_UP,
     KEY_RIGHT,
     KEY_DOWN,
@@ -14,7 +14,7 @@ typedef enum
 
 typedef enum
 {
-    RELEASED,
+    RELEASED = 0,
     PRESSED
 } hal_input_key_state;
 
