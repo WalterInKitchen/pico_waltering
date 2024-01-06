@@ -12,7 +12,7 @@ target_compile_definitions(watering PRIVATE
 )
 
 # pull in common dependencies
-target_link_libraries(watering pico_stdlib FreeRTOS-Kernel FreeRTOS-Kernel-Heap1)
+target_link_libraries(watering pico_stdlib hardware_i2c FreeRTOS-Kernel FreeRTOS-Kernel-Heap1)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(watering 1)

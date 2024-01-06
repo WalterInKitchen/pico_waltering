@@ -10,6 +10,7 @@
 
 #include "input_handler.h"
 #include "pump_runner.h"
+#include "display_oled.h"
 
 /* Prototypes for the standard FreeRTOS callback/hook functions implemented
 within this file. */
@@ -22,12 +23,12 @@ void app_init(void)
 {
     input_handler_init();
     pump_runner_init();
+    // display_oled_init();
 }
 
 int main()
 {
     stdio_init_all();
-
     app_init();
 
     /* Start the tasks and timer running. */

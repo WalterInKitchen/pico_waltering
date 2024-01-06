@@ -21,6 +21,7 @@
     "files.associations": {
         "log.h": "c",
         "compare": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "hal_pump.h": "c"
     }
 }

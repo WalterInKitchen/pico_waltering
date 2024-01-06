@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "pump_runner.h"
-#include "hal_input.h"
+#include "hal_pump.h"
 #include "log.h"
 
 #include "FreeRTOS.h"
@@ -17,6 +17,8 @@
 // 任务事件类型
 #define TASK_EVT_TYPE_EXECUTE_PUMP (0x01 << 0)
 #define TASK_EVT_TYPE_PUMP_RELEASE (0x01 << 1)
+#define TASK_EVT_TYPE_PUMP_ENABLE (0x01 << 2)
+#define TASK_EVT_TYPE_PUMP_DISABLE (0x01 << 3)
 
 static struct
 {
@@ -51,22 +53,39 @@ static void handlerTask(void *pvParameters)
         taskEvent = ulTaskNotifyTake(pdTRUE, SECONDS_TO_TICK(10));
         if (taskEvent == 0)
         {
-            printf("\r\nno event, remain...%d", pumpNextRunTimeSecondsGet());
             continue;
         }
         // 启动水泵
         if ((taskEvent & TASK_EVT_TYPE_EXECUTE_PUMP) > 0)
         {
             printf("\r\nstart pump");
+            hal_pump_control(eTrue);
             xTimerReset(pumpState.holdTimer, INFINITY_TIME);
             pumpState.state = PUMP_RUNNING;
         }
-        // 停止水泵
+        // 停止泵水
         if ((taskEvent & TASK_EVT_TYPE_PUMP_RELEASE) > 0)
         {
             printf("\r\npump release");
+            hal_pump_control(eFalse);
             xTimerReset(pumpState.periodTimer, INFINITY_TIME);
             pumpState.state = PUMP_WAITING;
+        }
+        // 启动水泵定时器，即打开水泵开关
+        if ((taskEvent & TASK_EVT_TYPE_PUMP_ENABLE) > 0)
+        {
+            BaseType_t res = xTimerStart(pumpState.periodTimer, INFINITY_TIME);
+            pumpState.state = PUMP_WAITING;
+            printf("\r\npump runner enabled...%d", res);
+        }
+        // 停止水泵定时器，即关闭水泵开关
+        if ((taskEvent & TASK_EVT_TYPE_PUMP_DISABLE) > 0)
+        {
+            BaseType_t res = xTimerStop(pumpState.periodTimer, INFINITY_TIME);
+            res = xTimerStop(pumpState.holdTimer, INFINITY_TIME);
+            pumpState.state = PUMP_INIT;
+            printf("\r\npump runner disabled...%d", res);
+            hal_pump_control(eFalse);
         }
     }
 }
@@ -87,16 +106,12 @@ static uint32 timerNextRunGetSeconds(TimerHandle_t timer)
 
 void pumpStartExecute(void)
 {
-    pumpState.state = PUMP_WAITING;
-    BaseType_t res = xTimerStart(pumpState.periodTimer, INFINITY_TIME);
-    printf("\r\ntimer started...%d", res);
+    xTaskNotify(pumpState.xRunnerTask, TASK_EVT_TYPE_PUMP_ENABLE, eSetBits);
 }
 
 void pumpStopExecute(void)
 {
-    pumpState.state = PUMP_INIT;
-    BaseType_t res = xTimerStop(pumpState.periodTimer, INFINITY_TIME);
-    printf("\r\ntimer stoped...%d", res);
+    xTaskNotify(pumpState.xRunnerTask, TASK_EVT_TYPE_PUMP_DISABLE, eSetBits);
 }
 
 uint32 pumpNextRunTimeSecondsGet(void)
