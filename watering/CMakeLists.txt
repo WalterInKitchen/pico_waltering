@@ -15,8 +15,8 @@ target_compile_definitions(watering PRIVATE
 target_link_libraries(watering pico_stdlib hardware_i2c FreeRTOS-Kernel FreeRTOS-Kernel-Heap1)
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(watering 1)
-pico_enable_stdio_uart(watering 0)
+# pico_enable_stdio_usb(watering 1)
+pico_enable_stdio_uart(watering 1)
 
 # create map/bin/hex/uf2 file etc.
 pico_add_extra_outputs(watering)

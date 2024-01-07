@@ -23,7 +23,7 @@ void app_init(void)
 {
     input_handler_init();
     pump_runner_init();
-    // display_oled_init();
+    display_oled_init();
 }
 
 int main()

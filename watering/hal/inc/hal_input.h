@@ -5,11 +5,10 @@
 
 typedef enum
 {
-    KEY_LEFT = 1,
-    KEY_UP,
-    KEY_RIGHT,
+    KEY_UP = 1,
     KEY_DOWN,
-    KEY_MIDDLE
+    KEY_OK,
+    KEY_CANCEL
 } hal_input_key;
 
 typedef enum

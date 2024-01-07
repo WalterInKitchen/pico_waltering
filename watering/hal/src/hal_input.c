@@ -13,11 +13,10 @@ typedef struct
 
 // GPIO与KEY值的映射关系
 static gpioKeyDefine keysDefine[] = {
-    {15, KEY_LEFT},
     {14, KEY_UP},
-    {13, KEY_MIDDLE},
+    {13, KEY_OK},
     {12, KEY_DOWN},
-    {11, KEY_RIGHT},
+    {11, KEY_CANCEL},
 };
 
 #define keysDefineLength sizeof(keysDefine) / sizeof(gpioKeyDefine)
