@@ -21,9 +21,28 @@
 
 #define SEND_LOG_PRINT 0
 
+#define DISPLAY_WIDTH 128
+#define DISPLAY_HEIGHT 64
+#define TEXT_DISPLAY_START 5
+
+static char *drawRemainTextGet(void);
+static char *drawPumpPeriodTextGet(void);
+static char *drawPumpHoldTextGet(void);
+
+typedef char *(*pFuncDrawTextGet)();
+typedef struct
+{
+    pFuncDrawTextGet drawTextGet;
+    bool canSetByUser;
+} DisplayBlock;
+
 TaskHandle_t xRunnerTask;
 u8g2_t u8g2;
 i2c_inst_t *i2c_port = i2c0;
+
+DisplayBlock displayBlocks[] = {{drawRemainTextGet, 0},
+                                {drawPumpHoldTextGet, 1},
+                                {drawPumpPeriodTextGet, 1}};
 
 static void i2cInit(void)
 {
@@ -122,48 +141,92 @@ static void displayInit(void)
     u8g2_SetFontDirection(&u8g2, 0);
 }
 
-static void drawTest(void)
+static char *drawRemainTextGet(void)
 {
-    u8g2_ClearBuffer(&u8g2);
+    static char textBuf[128];
+    uint32 remain = pumpNextRunTimeSecondsGet();
+    char *unit = "Min";
+    float remainFloat;
 
-    u8g2_SetFontMode(&u8g2, 1); // Transparent
-    u8g2_SetFontDirection(&u8g2, 0);
-    u8g2_SetFont(&u8g2, u8g2_font_inb24_mf);
-    u8g2_DrawStr(&u8g2, 0, 30, "U");
+    if (remain == INFINITY_TIME)
+    {
+        sprintf(textBuf, "NEXT: --");
+    }
+    else
+    {
+        remainFloat = remain / 60.0;
+        if (remainFloat > 60)
+        {
+            remainFloat = remainFloat / 60.0;
+            unit = "Hr";
+        }
+        sprintf(textBuf, "NEXT: %.2f %s", remainFloat, unit);
+    }
+    return textBuf;
+}
 
-    u8g2_SetFontDirection(&u8g2, 1);
-    u8g2_SetFont(&u8g2, u8g2_font_inb30_mn);
-    u8g2_DrawStr(&u8g2, 21, 8, "8");
+static char *drawPumpPeriodTextGet(void)
+{
+    static char textBuf[128];
+    tPumpRunnerCfg cfg = pumpRunnerGetCfg();
 
-    u8g2_SetFontDirection(&u8g2, 0);
-    u8g2_SetFont(&u8g2, u8g2_font_inb24_mf);
-    u8g2_DrawStr(&u8g2, 51, 30, "g");
-    u8g2_DrawStr(&u8g2, 67, 30, "\xb2");
+    sprintf(textBuf, "PERIOD: %d M", cfg.pumpRunDurationMinutes);
+    return textBuf;
+}
 
-    u8g2_DrawHLine(&u8g2, 2, 35, 47);
-    u8g2_DrawHLine(&u8g2, 3, 36, 47);
-    u8g2_DrawVLine(&u8g2, 45, 32, 12);
-    u8g2_DrawVLine(&u8g2, 46, 33, 12);
+static char *drawPumpHoldTextGet(void)
+{
+    static char textBuf[128];
+    tPumpRunnerCfg cfg = pumpRunnerGetCfg();
 
-    u8g2_SetFont(&u8g2, u8g2_font_4x6_tr);
+    sprintf(textBuf, "HOLD: %d SEC", cfg.pumpKeepSeconds);
+    return textBuf;
+}
 
-    u8g2_DrawStr(&u8g2, 1, 54, "github.com/olikraus/u8g2");
+static void drawBlocks(void)
+{
+    uint32 i = 0;
+    uint32 lineStart = 20;
+    uint32 len = sizeof(displayBlocks) / sizeof(DisplayBlock);
+    DisplayBlock *pCurBlock;
+    char *text;
+    uint32 displayFlag = 0;
 
-    u8g2_SendBuffer(&u8g2);
+    u8g2_SetFont(&u8g2, u8g2_font_helvB10_te);
+    for (i = 0; i < len; i++)
+    {
+        displayFlag = U8G2_BTN_BW0;
+        u8g2_SetDrawColor(&u8g2, 1);
+        if (i == 1)
+        {
+            displayFlag |= U8G2_BTN_INV;
+        }
+        pCurBlock = &displayBlocks[i];
+        text = pCurBlock->drawTextGet();
+        u8g2_DrawButtonUTF8(&u8g2, TEXT_DISPLAY_START, lineStart, displayFlag, DISPLAY_WIDTH - 2 * TEXT_DISPLAY_START, 1, 1, text);
+        lineStart += 18;
+    }
 }
 
 static void handlerTask(void *pvParameters)
 {
     i2cInit();
     displayInit();
-    u8g2_FirstPage(&u8g2);
-    u8g2_SendBuffer(&u8g2);
+    pumpStartExecute();
+
     while (1)
     {
-        vTaskDelay(10000);
-        printf("\r\n u8g2 ready draw");
-        drawTest();
+        u8g2_FirstPage(&u8g2);
+        do
+        {
+            u8g2_DrawRFrame(&u8g2, 0, 0, 128, 64, 8);
+            drawBlocks();
+            u8g2_SendBuffer(&u8g2);
+        } while (u8g2_NextPage(&u8g2));
+
+        vTaskDelay(1000);
     }
+    printf("\r\noled done...");
 }
 
 void display_oled_init(void)

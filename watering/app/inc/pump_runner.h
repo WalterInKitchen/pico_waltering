@@ -43,12 +43,17 @@ void pumpStartExecute(void);
 
 /**
  * 停止执行
-*/
+ */
 void pumpStopExecute(void);
 
 /**
  * 配置
  */
 void pumpRunnerSetCfg(tPumpRunnerCfg *);
+
+/*
+ * 配置获取
+ */
+tPumpRunnerCfg pumpRunnerGetCfg(void);
 
 #endif

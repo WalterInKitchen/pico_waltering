@@ -139,3 +139,8 @@ void pumpRunnerSetCfg(tPumpRunnerCfg *cfg)
     xTimerChangePeriod(pumpState.periodTimer, MINUTE_TO_TICK(runnerCfg.pumpRunDurationMinutes), 0);
     xTimerChangePeriod(pumpState.holdTimer, SECONDS_TO_TICK(runnerCfg.pumpKeepSeconds), 0);
 }
+
+tPumpRunnerCfg pumpRunnerGetCfg(void)
+{
+    return runnerCfg;
+}
