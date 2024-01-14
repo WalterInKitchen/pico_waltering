@@ -7,17 +7,6 @@
 ## 引脚定义
 
 ## 更新依赖
-```shell
-git submodule update --init --recursive
-```
-或者执行
-```shell
-git clone git@github.com:FreeRTOS/FreeRTOS.git --recurse-submodules
-
-git clone git@github.com:raspberrypi/pico-sdk.git --recurse-submodules
-
-git clone git@github.com:olikraus/u8g2.git
-```
 
 ## 编译
 ```shell
