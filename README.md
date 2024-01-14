@@ -38,3 +38,9 @@ cd build
 cmake ..
 make
 ```
+
+## 烧录
+
+将watering.uf2拷贝到PICO挂载的磁盘中（如下图）
+
+![image02](./assets/image02.png)
