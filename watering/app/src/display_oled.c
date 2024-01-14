@@ -25,6 +25,10 @@
 #define DISPLAY_HEIGHT 64
 #define TEXT_DISPLAY_START 5
 
+// 任务事件类型
+#define OLED_REFRESH (0x01 << 0)
+#define OLED_EVT_SLEEP (0x01 << 1)
+
 static char *drawRemainTextGet(void);
 static char *drawPumpPeriodTextGet(void);
 static char *drawPumpHoldTextGet(void);
@@ -34,15 +38,18 @@ typedef struct
 {
     pFuncDrawTextGet drawTextGet;
     bool canSetByUser;
+    uint32 settingIdx;
 } DisplayBlock;
 
 TaskHandle_t xRunnerTask;
 u8g2_t u8g2;
 i2c_inst_t *i2c_port = i2c0;
 
-DisplayBlock displayBlocks[] = {{drawRemainTextGet, 0},
-                                {drawPumpHoldTextGet, 1},
-                                {drawPumpPeriodTextGet, 1}};
+DisplayBlock displayBlocks[] = {{drawRemainTextGet, 1, 1},
+                                {drawPumpHoldTextGet, 1, 2},
+                                {drawPumpPeriodTextGet, 1, 3}};
+
+static uint32 highlightSettingdIdx;
 
 static void i2cInit(void)
 {
@@ -195,13 +202,12 @@ static void drawBlocks(void)
     u8g2_SetFont(&u8g2, u8g2_font_helvB10_te);
     for (i = 0; i < len; i++)
     {
+        pCurBlock = &displayBlocks[i];
         displayFlag = U8G2_BTN_BW0;
-        u8g2_SetDrawColor(&u8g2, 1);
-        if (i == 1)
+        if (highlightSettingdIdx == pCurBlock->settingIdx)
         {
             displayFlag |= U8G2_BTN_INV;
         }
-        pCurBlock = &displayBlocks[i];
         text = pCurBlock->drawTextGet();
         u8g2_DrawButtonUTF8(&u8g2, TEXT_DISPLAY_START, lineStart, displayFlag, DISPLAY_WIDTH - 2 * TEXT_DISPLAY_START, 1, 1, text);
         lineStart += 18;
@@ -210,12 +216,16 @@ static void drawBlocks(void)
 
 static void handlerTask(void *pvParameters)
 {
+    uint32_t taskEvent = 0;
     i2cInit();
     displayInit();
-    pumpStartExecute();
 
     while (1)
     {
+        taskEvent = ulTaskNotifyTake(pdTRUE, SECONDS_TO_TICK(1));
+        if (taskEvent | OLED_EVT_SLEEP)
+        {
+        }
         u8g2_FirstPage(&u8g2);
         do
         {
@@ -223,10 +233,19 @@ static void handlerTask(void *pvParameters)
             drawBlocks();
             u8g2_SendBuffer(&u8g2);
         } while (u8g2_NextPage(&u8g2));
-
-        vTaskDelay(1000);
     }
     printf("\r\noled done...");
+}
+
+void display_highlight_settings(uint32 settingIdx)
+{
+    highlightSettingdIdx = settingIdx;
+    display_refresh_content();
+}
+
+void display_refresh_content(void)
+{
+    xTaskNotify(xRunnerTask, OLED_REFRESH, eSetBits);
 }
 
 void display_oled_init(void)

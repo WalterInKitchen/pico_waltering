@@ -10,9 +10,6 @@
 
 /* Priorities at which the tasks are created. */
 #define TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-#define SECONDS_TO_MS(SEC) (SEC * 1000)
-#define SECONDS_TO_TICK(SEC) (pdMS_TO_TICKS(SECONDS_TO_MS(SEC)))
-#define MINUTE_TO_TICK(MIN) (SECONDS_TO_TICK(MIN * 60))
 
 // 任务事件类型
 #define TASK_EVT_TYPE_EXECUTE_PUMP (0x01 << 0)
