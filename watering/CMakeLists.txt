@@ -8,7 +8,7 @@ aux_source_directory(app/src SRC_LIST)
 add_executable(watering ${SRC_LIST})
 
 target_compile_definitions(watering PRIVATE
-    INPUT_HANDLER_LOG_ENABLE=1
+    INPUT_HANDLER_LOG_ENABLE=0
 )
 
 # pull in common dependencies

@@ -116,18 +116,16 @@ static void inputEventHandlerTask(void *pvParameters)
     {
         if (pdPASS != xQueueReceive(keySrcQueue, &currentKeyEvt, pdMS_TO_TICKS(60 * 1000)))
         {
-            printf("state timeoutd\r\n");
             nextState = stepOutCurrentState(tpCurrentState);
             tpCurrentState = enterState(tpCurrentState, nextState);
             continue;
         }
 #if INPUT_HANDLER_LOG_ENABLE
-        printf("input_event:%d %d\r\n", currentKeyEvt.key, currentKeyEvt.state);
+        printf("\r\ninput_event:%d %d", currentKeyEvt.key, currentKeyEvt.state);
 #endif
         if (tpCurrentState->keyEvtHandler)
         {
             nextState = tpCurrentState->keyEvtHandler(tpCurrentState, &currentKeyEvt);
-            printf("state %d %d\r\n", tpCurrentState, nextState);
             tpCurrentState = enterState(tpCurrentState, nextState);
         }
     }
@@ -285,10 +283,14 @@ static tStateMachine *periodTimeChangeHandler(tStateMachine *state, void *arg)
 static void sleepStateEnter(tStateMachine *state)
 {
     display_highlight_settings(0);
+    display_enter_power_save();
+    printf("\r\nenter sleep");
 }
 static void holdStateEnter(tStateMachine *state)
 {
     display_highlight_settings(0);
+    display_exit_power_save();
+    printf("\r\nenter hold");
 }
 static void settingsStateEnter(tStateMachine *state)
 {

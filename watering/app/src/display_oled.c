@@ -27,7 +27,8 @@
 
 // 任务事件类型
 #define OLED_REFRESH (0x01 << 0)
-#define OLED_EVT_SLEEP (0x01 << 1)
+#define OLED_EVT_SLEEP_ENTER (0x01 << 1)
+#define OLED_EVT_SLEEP_EXIT (0x01 << 2)
 
 static char *drawRemainTextGet(void);
 static char *drawPumpPeriodTextGet(void);
@@ -41,6 +42,28 @@ typedef struct
     uint32 settingIdx;
 } DisplayBlock;
 
+// 状态机
+static void *displayRunningStateEnter(void *);
+static void *displayRunningStateExit(void *);
+static void *displayRunningStateProcess(void *);
+static void *displaySleepStateEnter(void *);
+static void *displaySleepStateExit(void *);
+static void *displaySleepStateProcess(void *);
+
+typedef void *(*stateHandler)(void *);
+typedef struct
+{
+    stateHandler enterHandler;
+    stateHandler exitHandler;
+    stateHandler processHandler;
+    uint32 evtAwaitTimeSec;
+} DisplayStateMachine;
+
+static DisplayStateMachine displayRunningState = {displayRunningStateEnter, displayRunningStateExit, displayRunningStateProcess, 1};
+static DisplayStateMachine displaySleepState = {displaySleepStateEnter, displaySleepStateExit, displaySleepStateProcess, 30};
+static DisplayStateMachine *displayCurrentState;
+
+// RTOS
 TaskHandle_t xRunnerTask;
 u8g2_t u8g2;
 i2c_inst_t *i2c_port = i2c0;
@@ -152,7 +175,7 @@ static char *drawRemainTextGet(void)
 {
     static char textBuf[128];
     uint32 remain = pumpNextRunTimeSecondsGet();
-    char *unit = "Min";
+    char *unit = "SEC";
     float remainFloat;
 
     if (remain == INFINITY_TIME)
@@ -161,11 +184,20 @@ static char *drawRemainTextGet(void)
     }
     else
     {
-        remainFloat = remain / 60.0;
-        if (remainFloat > 60)
+        // 大于1分钟
+        if (remain > 60)
         {
-            remainFloat = remainFloat / 60.0;
-            unit = "Hr";
+            remainFloat = remain / 60.0;
+            unit = "Min";
+            if (remainFloat > 60)
+            {
+                remainFloat = remainFloat / 60.0;
+                unit = "Hr";
+            }
+        }
+        else
+        {
+            remainFloat = (float)remain;
         }
         sprintf(textBuf, "NEXT: %.2f %s", remainFloat, unit);
     }
@@ -219,20 +251,27 @@ static void handlerTask(void *pvParameters)
     uint32_t taskEvent = 0;
     i2cInit();
     displayInit();
+    displayCurrentState = &displayRunningState;
+    displayCurrentState->enterHandler(NULL);
 
     while (1)
     {
-        taskEvent = ulTaskNotifyTake(pdTRUE, SECONDS_TO_TICK(1));
-        if (taskEvent | OLED_EVT_SLEEP)
+        taskEvent = ulTaskNotifyTake(pdTRUE, SECONDS_TO_TICK(displayCurrentState->evtAwaitTimeSec));
+        if (taskEvent & OLED_EVT_SLEEP_ENTER)
         {
+            displayCurrentState->exitHandler(NULL);
+            displayCurrentState = &displaySleepState;
+            displayCurrentState->enterHandler(NULL);
+            printf("\r\ndisplay enter sleep");
         }
-        u8g2_FirstPage(&u8g2);
-        do
+        else if (taskEvent & OLED_EVT_SLEEP_EXIT)
         {
-            u8g2_DrawRFrame(&u8g2, 0, 0, 128, 64, 8);
-            drawBlocks();
-            u8g2_SendBuffer(&u8g2);
-        } while (u8g2_NextPage(&u8g2));
+            displayCurrentState->exitHandler(NULL);
+            displayCurrentState = &displayRunningState;
+            displayCurrentState->enterHandler(NULL);
+            printf("\r\ndisplay enter running");
+        }
+        displayCurrentState->processHandler(NULL);
     }
     printf("\r\noled done...");
 }
@@ -247,8 +286,51 @@ void display_refresh_content(void)
 {
     xTaskNotify(xRunnerTask, OLED_REFRESH, eSetBits);
 }
+void display_enter_power_save(void)
+{
+    xTaskNotify(xRunnerTask, OLED_EVT_SLEEP_ENTER, eSetBits);
+}
+
+void display_exit_power_save(void)
+{
+    xTaskNotify(xRunnerTask, OLED_EVT_SLEEP_EXIT, eSetBits);
+}
 
 void display_oled_init(void)
 {
     xTaskCreate(handlerTask, "display_u8g2", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY, &xRunnerTask);
+}
+
+static void *displayRunningStateEnter(void *arg)
+{
+    u8g2_SetPowerSave(&u8g2, 0);
+    return NULL;
+}
+static void *displayRunningStateExit(void *arg)
+{
+    return NULL;
+}
+static void *displayRunningStateProcess(void *arg)
+{
+    u8g2_FirstPage(&u8g2);
+    do
+    {
+        u8g2_DrawRFrame(&u8g2, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, 8);
+        drawBlocks();
+        u8g2_SendBuffer(&u8g2);
+    } while (u8g2_NextPage(&u8g2));
+    return NULL;
+}
+static void *displaySleepStateEnter(void *arg)
+{
+    u8g2_SetPowerSave(&u8g2, 1);
+    return NULL;
+}
+static void *displaySleepStateExit(void *arg)
+{
+    return NULL;
+}
+static void *displaySleepStateProcess(void *arg)
+{
+    return NULL;
 }

@@ -9,4 +9,8 @@ void display_highlight_settings(uint32);
 
 void display_refresh_content(void);
 
+void display_enter_power_save(void);
+
+void display_exit_power_save(void);
+
 #endif
