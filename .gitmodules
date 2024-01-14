@@ -1,0 +1,9 @@
+[submodule "pico-sdk"]
+	path = pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
+[submodule "FreeRTOS"]
+	path = FreeRTOS
+	url = https://github.com:FreeRTOS/FreeRTOS.git
+[submodule "u8g2"]
+	path = u8g2
+	url = https://github.com:olikraus/u8g2.git
