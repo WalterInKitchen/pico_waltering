@@ -45,6 +45,7 @@ static void holdTimerCallback()
 static void handlerTask(void *pvParameters)
 {
     uint32_t taskEvent = 0;
+    hal_pump_init();
     while (1)
     {
         taskEvent = ulTaskNotifyTake(pdTRUE, SECONDS_TO_TICK(10));

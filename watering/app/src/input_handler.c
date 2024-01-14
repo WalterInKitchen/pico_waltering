@@ -251,7 +251,7 @@ static tStateMachine *holdTimeChangeHandler(tStateMachine *state, void *arg)
     {
         cfg.pumpKeepSeconds -= 1;
     }
-    cfg.pumpKeepSeconds = cfg.pumpKeepSeconds < 1 ? 1 : cfg.pumpKeepSeconds;
+    cfg.pumpKeepSeconds = (int)cfg.pumpKeepSeconds < 1 ? 1 : cfg.pumpKeepSeconds;
     pumpRunnerSetCfg(&cfg);
     display_refresh_content();
     return state;
@@ -274,7 +274,7 @@ static tStateMachine *periodTimeChangeHandler(tStateMachine *state, void *arg)
     {
         cfg.pumpRunDurationMinutes -= 10;
     }
-    cfg.pumpRunDurationMinutes = cfg.pumpRunDurationMinutes < 10 ? 10 : cfg.pumpRunDurationMinutes;
+    cfg.pumpRunDurationMinutes = (int)cfg.pumpRunDurationMinutes < 10 ? 10 : cfg.pumpRunDurationMinutes;
     pumpRunnerSetCfg(&cfg);
     display_refresh_content();
     return state;
