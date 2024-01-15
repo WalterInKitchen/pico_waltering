@@ -184,7 +184,6 @@ static char *drawRemainTextGet(void)
     }
     else
     {
-        // 大于1分钟
         if (remain > 60)
         {
             remainFloat = remain / 60.0;
@@ -194,12 +193,14 @@ static char *drawRemainTextGet(void)
                 remainFloat = remainFloat / 60.0;
                 unit = "Hr";
             }
+            sprintf(textBuf, "NEXT: %.2f %s", remainFloat, unit);
         }
         else
         {
+            unit = "SEC";
             remainFloat = (float)remain;
+            sprintf(textBuf, "NEXT: %d %s", remain, unit);
         }
-        sprintf(textBuf, "NEXT: %.2f %s", remainFloat, unit);
     }
     return textBuf;
 }

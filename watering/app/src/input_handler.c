@@ -243,16 +243,22 @@ static tStateMachine *holdTimeChangeHandler(tStateMachine *state, void *arg)
     }
 
     tPumpRunnerCfg cfg = pumpRunnerGetCfg();
+    uint32 seconds = cfg.pumpKeepSeconds;
+
     if (KEY_UP == evt->key)
     {
-        cfg.pumpKeepSeconds += 1;
+        seconds += 1;
     }
     else
     {
-        cfg.pumpKeepSeconds -= 1;
+        seconds -= 1;
     }
-    cfg.pumpKeepSeconds = (int)cfg.pumpKeepSeconds < 1 ? 1 : cfg.pumpKeepSeconds;
-    pumpRunnerSetCfg(&cfg);
+    seconds = (int)seconds < 1 ? 1 : seconds;
+    if (seconds != cfg.pumpKeepSeconds)
+    {
+        cfg.pumpKeepSeconds = seconds;
+        pumpRunnerSetCfg(&cfg);
+    }
     display_refresh_content();
     return state;
 }
@@ -266,16 +272,23 @@ static tStateMachine *periodTimeChangeHandler(tStateMachine *state, void *arg)
     }
 
     tPumpRunnerCfg cfg = pumpRunnerGetCfg();
+    uint32 mins = cfg.pumpRunDurationMinutes;
+
     if (KEY_UP == evt->key)
     {
-        cfg.pumpRunDurationMinutes += 10;
+        mins += 10;
     }
     else
     {
-        cfg.pumpRunDurationMinutes -= 10;
+        mins -= 10;
     }
-    cfg.pumpRunDurationMinutes = (int)cfg.pumpRunDurationMinutes < 10 ? 10 : cfg.pumpRunDurationMinutes;
-    pumpRunnerSetCfg(&cfg);
+
+    mins = (int)mins < 10 ? 10 : mins;
+    if (mins != cfg.pumpRunDurationMinutes)
+    {
+        cfg.pumpRunDurationMinutes = mins;
+        pumpRunnerSetCfg(&cfg);
+    }
     display_refresh_content();
     return state;
 }
