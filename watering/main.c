@@ -6,6 +6,10 @@
 #include "semphr.h"
 
 #include "pico/stdlib.h"
+#include "hardware/pll.h"
+#include "hardware/clocks.h"
+#include "hardware/structs/pll.h"
+#include "hardware/structs/clocks.h"
 #include "log.h"
 
 #include "input_handler.h"
@@ -29,6 +33,12 @@ void app_init(void)
 int main()
 {
     stdio_init_all();
+
+    clock_configure(clk_sys,
+                    CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX,
+                    CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB,
+                    48 * MHZ,
+                    48 * MHZ);
     app_init();
 
     /* Start the tasks and timer running. */
