@@ -283,7 +283,7 @@ static tStateMachine *periodTimeChangeHandler(tStateMachine *state, void *arg)
         mins -= 10;
     }
 
-    mins = (int)mins < 10 ? 10 : mins;
+    mins = (int)mins < 1 ? 1 : mins;
     if (mins != cfg.pumpRunDurationMinutes)
     {
         cfg.pumpRunDurationMinutes = mins;
